@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <title>Ascii-art-web</title>
+</head>
+
+<body>
+    <div class="parent">
+        <div class="form">
+            <form id="ascii-form">
+                <table>
+                    <table class="mainControl">
+                        <tr>
+                            <th>Ascii-art-web</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div>
+                                    <label for="font">Font:</label>
+                                    <select name="font" id="font">
+                                        <option value="standard">Standard</option>
+                                        <option value="shadow">Shadow</option>
+                                        <option value="thinkertoy">Thinkertoy</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <textarea type="text" name="text"></input>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div>
+                                    <input type="submit" value="Generate">
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="other">
+                        <td>
+                            <p>New features on the way - stay tuned</p>
+                        </td>
+                    </table>
+                </table>
+            </form>
+        </div>
+        <div id="error-tag"></div>
+        <div class="screen">
+            <button onclick="copyToClipboard()">Copy to Clipboard</button>
+            <style>
+                #ascii-textarea {
+                    width: 75vw;
+                    height: 40vh;
+                }
+            </style>
+            <div>
+                <textarea id="ascii-textarea"></textarea>
+            </div>
+        </div>
+    </div>
+    <script>
+        const asciiForm = document.getElementById('ascii-form');
+        const asciiTextArea = document.getElementById("ascii-textarea");
+        const errorTag = document.getElementById("error-tag");
+
+        asciiForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(asciiForm);
+            try {
+                const response = await fetch('/ascii-art', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.text();
+                console.log(data);
+                asciiTextArea.value = data;
+            } catch (error) {
+                console.error(error);
+                errorTag.textContent = 'Error occurred while submitting the form';
+            }
+        });
+
+        function copyToClipboard() {
+            asciiTextArea.select();
+            document.execCommand("copy");
+            asciiTextArea.blur();
+        }
+    </script>
+</body>
+
+</html>
