@@ -90,17 +90,16 @@ func PrintAscii(output string) {
 	fmt.Print(output)
 }
 
-func ParseFile(name string, isJustifying bool) map[int][][]rune {
+func ParseFile(name string, isJustifying bool) (map[int][][]rune, bool) {
+	asciiCharacters := map[int][][]rune{}
 	_content, err := os.ReadFile(name)
 	content := string(_content)
 	if err != nil {
 		fmt.Println("ERROR: exit when reading file")
-		fmt.Println(err)
-		os.Exit(1)
+		return asciiCharacters, true
 	}
 	content = strings.ReplaceAll(content, "\r\n", "\n")
 	lines := strings.Split(content, "\n")
-	asciiCharacters := map[int][][]rune{}
 	character := [][]rune{}
 	actualChar := 32
 	for i := 1; i < len(lines); i++ {
@@ -116,7 +115,7 @@ func ParseFile(name string, isJustifying bool) map[int][][]rune {
 		}
 		character = append(character, []rune(line))
 	}
-	return asciiCharacters
+	return asciiCharacters, false
 }
 
 func SaveFile(fileName string, text string) {

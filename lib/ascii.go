@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-func ConvertTextToArt(_text, align, color, colorize string, asciiCharacters map[int][][]rune) string {
+func ConvertTextToArt(_text, align, color, colorize string, asciiCharacters map[int][][]rune) (string, bool) {
 	result := ""
 	colorGap := 0
-	text := strings.Split(_text, `\n`)
+	text := strings.Split(_text, "\n")
 	if !IsValid(text) {
 		fmt.Println("❌ ERROR: Argument containing unknown characters")
-		os.Exit(1)
+		return "", true
 	}
 	width := GetTerminalWidth()
 
@@ -56,7 +56,7 @@ func ConvertTextToArt(_text, align, color, colorize string, asciiCharacters map[
 			result += "\n"
 		}
 	}
-	return result
+	return result, false
 }
 
 func ConvertArtToText(_text, align, color, colorize string, asciiCharacters map[int][][]rune) string {
@@ -135,7 +135,7 @@ func ConvertArtToText(_text, align, color, colorize string, asciiCharacters map[
 func GetMatchingCharacter(text [][]rune, asciiCharacters map[int][][]rune, firstCol, lastCol, line int) string {
 	for key, asciiChar := range asciiCharacters {
 		if len(asciiChar[0]) == len(text[line][firstCol:lastCol]) && line+7 <= len(text) {
-			if  string(asciiChar[1]) == string(text[line+1][firstCol:lastCol]) &&
+			if string(asciiChar[1]) == string(text[line+1][firstCol:lastCol]) &&
 				string(asciiChar[2]) == string(text[line+2][firstCol:lastCol]) &&
 				string(asciiChar[3]) == string(text[line+3][firstCol:lastCol]) &&
 				string(asciiChar[4]) == string(text[line+4][firstCol:lastCol]) &&

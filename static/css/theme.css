@@ -1,0 +1,22 @@
+
+/* Colors */
+:root {
+    /* Primariy */
+    --primary: #171c2f;
+    --lprimary: #1d2236;
+    --dprimary: #151825;
+    --secondary: #1d44a8;
+    --lsecondary: #436bd0;
+
+    --white: #fff;
+    --white-t: #ffffff9c;
+    --black: #161616;
+    --error: #ba1b3b;
+    --success: #1bba65;
+
+    /* Sizing */
+    --header-h: 70px;
+    --tiny-gasp: 2px;
+    --gasp: 25px;
+    --radius: 2.5px;
+}

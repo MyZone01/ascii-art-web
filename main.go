@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -14,14 +15,14 @@ const PORT = ":8080"
 func indexHandler(res http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/" {
 		res.WriteHeader(http.StatusNotFound)
-		renderTemplate(res, "error")
+		renderTemplate(res, "404")
 		log.Println("404 ❌ - Page not found ")
 		return
 	}
 
 	if req.Method != http.MethodGet {
 		res.WriteHeader(http.StatusMethodNotAllowed)
-		renderTemplate(res, "error")
+		fmt.Fprintf(res, "%s", "Error - Method not allowed")
 		log.Println("405 ❌ - Method not allowed")
 		return
 	}
@@ -32,14 +33,14 @@ func indexHandler(res http.ResponseWriter, req *http.Request) {
 func asciiHandler(res http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/ascii-art" {
 		res.WriteHeader(http.StatusNotFound)
-		renderTemplate(res, "error")
+		renderTemplate(res, "404")
 		log.Println("404 ❌ - Page not found ")
 		return
 	}
 
 	if req.Method != http.MethodPost {
 		res.WriteHeader(http.StatusMethodNotAllowed)
-		renderTemplate(res, "error")
+		renderTemplate(res, "405")
 		log.Println("405 ❌ - Method not allowed")
 		return
 	}
@@ -48,16 +49,45 @@ func asciiHandler(res http.ResponseWriter, req *http.Request) {
 	font := req.FormValue("font")
 
 	if font != "standard" && font != "shadow" && font != "thinkertoy" {
-		res.WriteHeader(http.StatusInternalServerError)
-		log.Println("500 ❌ Internal Server Error - Font Not Found")
-		renderTemplate(res, "error")
+		res.WriteHeader(http.StatusBadRequest)
+		log.Println("400 ❌ Bad Request - Font Not Found")
+		fmt.Fprintf(res, "%s", "Error - Font Not Found")
 		return
 	}
-	asciiCharacters := ascii.ParseFile("fonts/"+font+".txt", false)
-	output := ascii.ConvertTextToArt(text, "left", "", "", asciiCharacters)
+	asciiCharacters, err := ascii.ParseFile("fonts/"+font+".txt", false)
+	if err {
+		res.WriteHeader(http.StatusInternalServerError)
+		log.Println("500 ❌ Internal Server Error - Template file not found")
+		fmt.Fprintf(res, "%s", "Error - Font Not Found")
+		return
+	}
 
+	output, err := ascii.ConvertTextToArt(text, "left", "", "", asciiCharacters)
+	if err {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Println("400 ❌ Bad Request - Non valid character")
+		fmt.Fprintf(res, "%s", "Error - Non valid character")
+		return
+	}
 	fmt.Fprintf(res, "%s", output)
 	log.Println("200 ✅ =>", req.FormValue("text"))
+}
+
+func exportFile(res http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/download" {
+		res.WriteHeader(http.StatusNotFound)
+		renderTemplate(res, "404")
+		log.Println("404 ❌ - Page not found ")
+		return
+	}
+	if req.Method == http.MethodGet {
+		output := req.FormValue("output")
+
+		res.Header().Set("Content-Type", "text/plain")
+		res.Header().Set("Content-Length", strconv.Itoa(len(output)))
+		res.Header().Set("Content-Disposition", "attachement; filename=file.txt")
+		res.Write([]byte(output))
+	}
 }
 
 var templates = template.Must(template.ParseGlob("./template/*.html"))
@@ -66,17 +96,20 @@ func renderTemplate(res http.ResponseWriter, tmpl string) {
 	err := templates.ExecuteTemplate(res, tmpl+".html", nil)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
-		renderTemplate(res, "error")
-		log.Println("505 ❌ Internal Server Error - Font Not Found")
+		fmt.Fprintf(res, "%s", "Error - Cannot render page")
+		log.Println("500 ❌ Internal Server Error")
 	}
 }
 
 func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/ascii-art", asciiHandler)
-	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "./static/favicon.ico") })
+	http.HandleFunc("/download", exportFile)
 
-	fmt.Println("Server started and listening on ", PORT)
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./static/css/"))))
+	http.Handle("/img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img/"))))
+
+	fmt.Println("Server started and listening on", PORT)
 	fmt.Println("http://localhost" + PORT)
 	log.Fatal(http.ListenAndServe(PORT, nil))
 }
